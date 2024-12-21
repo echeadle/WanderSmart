@@ -169,3 +169,10 @@ Creating a Travel agency with CrewAI and Streamlit
 - Start with Python GPT for MVP development.
 - Integrate CrewAI later for intelligent and scalable backend processes.
 
+## Original Theme
+[theme]
+base = "dark"  # Ensures a consistent dark theme
+primaryColor = "#1DB954"  # Optional: Accent color (e.g., green for buttons)
+backgroundColor = "#121212"  # Optional: Background color for the app
+secondaryBackgroundColor = "#191919"  # Optional: Background for widgets
+textColor = "#FFFFFF"  # Optional: Text color

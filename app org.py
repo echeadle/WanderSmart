@@ -1,31 +1,20 @@
 import streamlit as st
-import os
-from dotenv import load_dotenv
 
-# Load environment variables from .env
-load_dotenv()
-
-# Function to update .env file
-def update_env_file(settings):
-    with open('.env', 'w') as env_file:
-        for key, value in settings.items():
-            env_file.write(f"{key}={value}\n")
-
-# Set up Streamlit page
+# Basic setup for the Streamlit app
 st.set_page_config(page_title="WanderSmart", layout="wide")
 
+# App Header
+st.title("WanderSmart")
+st.subheader("Your AI-powered travel companion for European adventures")
+st.write("Plan your dream European trip effortlessly with smart, tailored recommendations.")
 
 # Sidebar for Navigation
 with st.sidebar:
     st.header("Explore WanderSmart")
-    page = st.radio("Navigate to:", ["Home", "Destination Explorer", "Trip Planner", "Chat with AI", "Feedback", "Logging Control"])
-
+    page = st.radio("Navigate to:", ["Home", "Destination Explorer", "Trip Planner", "Chat with AI", "Feedback"])
 
 # Home Page
 if page == "Home":
-    st.title("WanderSmart")
-    st.subheader("Your AI-powered travel companion for European adventures")
-    st.write("Plan your dream European trip effortlessly with smart, tailored recommendations.")
     st.image("./images/europe.jpg", caption="Explore Europe like never before with WanderSmart.", use_container_width=True)
     st.write("\n")
     st.write("WanderSmart combines cutting-edge AI with personalized travel planning. Use our tools to discover amazing destinations, create tailored itineraries, and chat with AI agents for real-time assistance.")
@@ -50,7 +39,7 @@ elif page == "Destination Explorer":
 elif page == "Trip Planner":
     st.header("Plan Your Trip")
     st.write("Answer a few questions to help us tailor your perfect European adventure.")
-
+    
     name = st.text_input("What is your name?")
     start_date = st.date_input("When do you want to start your trip?")
     end_date = st.date_input("When do you want to return?")
@@ -60,9 +49,7 @@ elif page == "Trip Planner":
         ["History", "Art", "Food", "Nightlife", "Nature", "Shopping"]
     )
 
-    if start_date > end_date:
-        st.error("Error: Start date must be before the end date.")
-    elif st.button("Get My Itinerary"):
+    if st.button("Get My Itinerary"):
         st.write(f"Thank you, {name}! Your itinerary will be based on:")
         st.write(f"Dates: {start_date} to {end_date}")
         st.write(f"Budget: ${budget}")
@@ -87,25 +74,3 @@ elif page == "Feedback":
     feedback = st.text_area("How can we improve your experience?")
     if st.button("Submit Feedback"):
         st.success("Thank you for your feedback!")
-
-elif page == "Logging Control":
-    st.header("Logging Settings")
-
-    # Logging toggle controls
-    enable_console = st.checkbox(
-        "Enable Console Logging", 
-        value=os.getenv('ENABLE_CONSOLE_LOGGING', 'false').lower() == 'true'
-    )
-    enable_file = st.checkbox(
-        "Enable File Logging", 
-        value=os.getenv('ENABLE_FILE_LOGGING', 'false').lower() == 'true'
-    )
-
-    if st.button("Apply Logging Settings"):
-        # Update .env with new settings
-        settings = {
-            'ENABLE_CONSOLE_LOGGING': 'true' if enable_console else 'false',
-            'ENABLE_FILE_LOGGING': 'true' if enable_file else 'false',
-        }
-        update_env_file(settings)
-        st.success("Logging settings updated! Please restart the application for changes to take effect.")

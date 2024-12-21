@@ -1,8 +1,13 @@
 import logging
+import os
+import sys
+import json
+from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 from crew import crew
-import sys
-import os
+
+# Load environment variables
+load_dotenv()
 
 # Get the directory where the script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -10,36 +15,51 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGS_DIR = os.path.join(SCRIPT_DIR, 'logs')
 os.makedirs(LOGS_DIR, exist_ok=True)
 
+# Configuration for logging handlers
+ENABLE_CONSOLE_LOGGING = os.getenv('ENABLE_CONSOLE_LOGGING', 'true').lower() == 'true'
+ENABLE_FILE_LOGGING = os.getenv('ENABLE_FILE_LOGGING', 'true').lower() == 'true'
+
 # Create logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-# Create handlers
-console_handler = logging.StreamHandler(sys.stdout)
-file_handler = logging.FileHandler(os.path.join(LOGS_DIR, 'wandersmart.log'), mode='a')
+# JSON formatter for structured logging
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_record = {
+            "time": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "message": record.getMessage()
+        }
+        return json.dumps(log_record)
 
-# Create formatters and add it to handlers
-log_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(log_format)
-file_handler.setFormatter(log_format)
+json_formatter = JSONFormatter()
 
-# Add handlers to the logger
-logger.addHandler(console_handler)
-logger.addHandler(file_handler)
+# Handlers
+if ENABLE_CONSOLE_LOGGING:
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(json_formatter)
+    logger.addHandler(console_handler)
 
-# Test logging
-logger.debug("Logging configuration completed")
+if ENABLE_FILE_LOGGING:
+    file_handler = RotatingFileHandler(
+        os.path.join(LOGS_DIR, 'wandersmart.log'),
+        maxBytes=5 * 1024 * 1024,  # 5 MB
+        backupCount=3  # Keep last 3 log files
+    )
+    file_handler.setFormatter(json_formatter)
+    logger.addHandler(file_handler)
 
-# Load environment variables
-load_dotenv()
+# Test logging configuration
+logger.debug("Logging configuration completed. Console Logging: "
+             f"{ENABLE_CONSOLE_LOGGING}, File Logging: {ENABLE_FILE_LOGGING}")
 
 if __name__ == "__main__":
     logger.info("Logging system initialized.")
     
     # Define test inputs
     inputs = {"destination": "Paris"}
-    
-    logger.info("Starting minimal CrewAI execution.")
+    logger.info(f"Starting minimal CrewAI execution with inputs: {inputs}")
     
     try:
         # Run the crew
