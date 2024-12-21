@@ -1,58 +1,50 @@
-#!/usr/bin/env python
+import logging
+from dotenv import load_dotenv
+from crew import crew
 import sys
-import warnings
+import os
 
-from wandersmart.crew import Wandersmart
+# Get the directory where the script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Create logs directory if it doesn't exist
+LOGS_DIR = os.path.join(SCRIPT_DIR, 'logs')
+os.makedirs(LOGS_DIR, exist_ok=True)
 
-warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+# Create logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
-# This main file is intended to be a way for you to run your
-# crew locally, so refrain from adding unnecessary logic into this file.
-# Replace with inputs you want to test with, it will automatically
-# interpolate any tasks and agents information
+# Create handlers
+console_handler = logging.StreamHandler(sys.stdout)
+file_handler = logging.FileHandler(os.path.join(LOGS_DIR, 'wandersmart.log'), mode='a')
 
-def run():
-    """
-    Run the crew.
-    """
-    inputs = {
-        'topic': 'AI LLMs'
-    }
-    Wandersmart().crew().kickoff(inputs=inputs)
+# Create formatters and add it to handlers
+log_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(log_format)
+file_handler.setFormatter(log_format)
 
+# Add handlers to the logger
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
 
-def train():
-    """
-    Train the crew for a given number of iterations.
-    """
-    inputs = {
-        "topic": "AI LLMs"
-    }
+# Test logging
+logger.debug("Logging configuration completed")
+
+# Load environment variables
+load_dotenv()
+
+if __name__ == "__main__":
+    logger.info("Logging system initialized.")
+    
+    # Define test inputs
+    inputs = {"destination": "Paris"}
+    
+    logger.info("Starting minimal CrewAI execution.")
+    
     try:
-        Wandersmart().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
-
+        # Run the crew
+        results = crew.kickoff(inputs=inputs)
+        logger.info("Execution completed.")
+        logger.info(f"Results: {results}")
     except Exception as e:
-        raise Exception(f"An error occurred while training the crew: {e}")
-
-def replay():
-    """
-    Replay the crew execution from a specific task.
-    """
-    try:
-        Wandersmart().crew().replay(task_id=sys.argv[1])
-
-    except Exception as e:
-        raise Exception(f"An error occurred while replaying the crew: {e}")
-
-def test():
-    """
-    Test the crew execution and returns the results.
-    """
-    inputs = {
-        "topic": "AI LLMs"
-    }
-    try:
-        Wandersmart().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
-
-    except Exception as e:
-        raise Exception(f"An error occurred while replaying the crew: {e}")
+        logger.error(f"Error during CrewAI execution: {e}", exc_info=True)

@@ -1,62 +1,59 @@
-from crewai import Agent, Crew, Process, Task
-from crewai.project import CrewBase, agent, crew, task
+from crewai import Agent, Task, Crew, Process
+from crewai_tools import SerperDevTool
 
-# If you want to run a snippet of code before or after the crew starts, 
-# you can use the @before_kickoff and @after_kickoff decorators
-# https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
 
-@CrewBase
-class Wandersmart():
-	"""Wandersmart crew"""
+# Add the SerperDevTool for general search capabilites
+search_tool = SerperDevTool()
 
-	# Learn more about YAML configuration files here:
-	# Agents: https://docs.crewai.com/concepts/agents#yaml-configuration-recommended
-	# Tasks: https://docs.crewai.com/concepts/tasks#yaml-configuration-recommended
-	agents_config = 'config/agents.yaml'
-	tasks_config = 'config/tasks.yaml'
+# Define agents
+recommendation_agent = Agent(
+    role="Travel Recommendation Specialist",
+    goal="Provide personalized travel recommendations to users for their desired {destination}",
+    backstory="You are a travel expert skilled at finding and suggesting the best options for travelers.",
+    verbose=False
+)
 
-	# If you would like to add tools to your agents, you can learn more about it here:
-	# https://docs.crewai.com/concepts/agents#agent-tools
-	@agent
-	def researcher(self) -> Agent:
-		return Agent(
-			config=self.agents_config['researcher'],
-			verbose=True
-		)
+search_agent = Agent(
+    role="Search Specialist",
+    goal="Find travel deals for flights, hotels, and tours, for the specified {destination}",
+    backstory="You are adept at scouring the web and APIs for the most accurate and up-to-date travel information.",
+    tools=[search_tool],
+    verbose=False
+)
 
-	@agent
-	def reporting_analyst(self) -> Agent:
-		return Agent(
-			config=self.agents_config['reporting_analyst'],
-			verbose=True
-		)
+chat_agent = Agent(
+    role="Interactive Travel Assistant",
+    goal="Respond to user queries and guide them through the booking process.",
+    backstory="You are a friendly and knowledgeable assistant who loves helping people plan their perfect trip.",
+    verbose=False
+)
 
-	# To learn more about structured task outputs, 
-	# task dependencies, and task callbacks, check out the documentation:
-	# https://docs.crewai.com/concepts/tasks#overview-of-a-task
-	@task
-	def research_task(self) -> Task:
-		return Task(
-			config=self.tasks_config['research_task'],
-		)
+# Define tasks
+fetch_travel_deals = Task(
+    description="Search for travel deals including flights, hotels, and tours, for the specifed {destination}",
+    expected_output="A list of travel deals tailored to the destinaton structured JSON object containing the top 5 deals for flights, hotels, and tours.",
+    agent=search_agent,
+    verbose=False
+)
 
-	@task
-	def reporting_task(self) -> Task:
-		return Task(
-			config=self.tasks_config['reporting_task'],
-			output_file='report.md'
-		)
+generate_recommendations = Task(
+    description="Analyze user preferences and travel deals to generate tailored travel package recommendations for the travelers {destination}.",
+    expected_output="A list of three personalized travel packages with pricing and key details.",
+    agent=recommendation_agent,
+    verbose=False
+)
 
-	@crew
-	def crew(self) -> Crew:
-		"""Creates the Wandersmart crew"""
-		# To learn how to add knowledge sources to your crew, check out the documentation:
-		# https://docs.crewai.com/concepts/knowledge#what-is-knowledge
+handle_queries = Task(
+    description="Interpret and respond to user queries about travel, such as pricing, availability, and recommendations for the {destination}",
+    expected_output="Clear and concise responses to user inquiries, addressing their specific questions.",
+    agent=chat_agent,
+    verbose=False
+)
 
-		return Crew(
-			agents=self.agents, # Automatically created by the @agent decorator
-			tasks=self.tasks, # Automatically created by the @task decorator
-			process=Process.sequential,
-			verbose=True,
-			# process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
-		)
+# Create the crew
+crew = Crew(
+    agents=[recommendation_agent, search_agent, chat_agent],
+    tasks=[fetch_travel_deals, generate_recommendations, handle_queries],
+    process=Process.sequential,
+    verbose=False
+)
