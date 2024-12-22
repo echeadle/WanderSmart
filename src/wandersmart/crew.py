@@ -1,7 +1,6 @@
 from crewai import Agent, Task, Crew, Process
 from crewai_tools import SerperDevTool
 
-
 # Add the SerperDevTool for general search capabilites
 search_tool = SerperDevTool()
 
@@ -50,10 +49,41 @@ handle_queries = Task(
     verbose=False
 )
 
-# Create the crew
+# Define a basic agent and task
+echo_agent = Agent(
+    role="Echo Agent",
+    goal="Simply echo back the inputs received for testing purposes.",
+    backstory="You are a debugging agent designed to verify input/output flow.",
+    verbose=False
+)
+
+echo_task = Task(
+    description="Echo the inputs received to verify the connection between Streamlit and CrewAI.",
+    expected_output="The exact inputs provided by the frontend.",
+    agent=echo_agent,
+    verbose=False
+)
+
+# Update the crew definition
 crew = Crew(
-    agents=[recommendation_agent, search_agent, chat_agent],
-    tasks=[fetch_travel_deals, generate_recommendations, handle_queries],
+    agents=[echo_agent],
+    tasks=[echo_task],
     process=Process.sequential,
     verbose=False
 )
+
+def echo_inputs(inputs):
+    try:
+        results = crew.kickoff(inputs=inputs)
+        return results
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# Create the crew
+# crew = Crew(
+#     agents=[recommendation_agent, search_agent, chat_agent],
+#     tasks=[fetch_travel_deals, generate_recommendations, handle_queries],
+#     process=Process.sequential,
+#     verbose=False
+# )

@@ -1,6 +1,8 @@
 import streamlit as st
 import os
+import sys
 from dotenv import load_dotenv
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 # Load environment variables from .env
 load_dotenv()
@@ -62,12 +64,30 @@ elif page == "Trip Planner":
 
     if start_date > end_date:
         st.error("Error: Start date must be before the end date.")
-    elif st.button("Get My Itinerary"):
+    elif st.button("Submit"):
         st.write(f"Thank you, {name}! Your itinerary will be based on:")
         st.write(f"Dates: {start_date} to {end_date}")
         st.write(f"Budget: ${budget}")
         st.write(f"Interests: {', '.join(interests) if interests else 'None specified'}")
-        st.write("[AI-generated itinerary coming soon]")
+        st.write(f"If everthing above looks right, submit the itenerary.")
+        # Prepare inputs for the backend
+        inputs = {
+                "name": name,
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "budget": budget,
+                "interests": interests
+            }
+
+        with st.spinner("Processing..."):
+            from src.wandersmart.crew import echo_inputs  # Adjust import based on your structure
+            response = echo_inputs(inputs)
+            
+            if "error" in response:
+                st.error(f"Error: {response['error']}")
+            else:
+                st.success("Backend communication successful!")
+                st.json(response)
 
 # Chat with AI Page
 elif page == "Chat with AI":
