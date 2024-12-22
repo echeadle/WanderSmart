@@ -79,15 +79,21 @@ elif page == "Trip Planner":
                 "interests": interests
             }
 
-        with st.spinner("Processing..."):
-            from src.wandersmart.crew import echo_inputs  # Adjust import based on your structure
-            response = echo_inputs(inputs)
-            
-            if "error" in response:
-                st.error(f"Error: {response['error']}")
-            else:
-                st.success("Backend communication successful!")
-                st.json(response)
+        with st.spinner("Fetching recommendations..."):
+                from crew import get_travel_recommendations
+                response = get_travel_recommendations(
+                    destination="Europe",
+                    interests=interests,
+                    budget=budget,
+                    start_date=start_date,
+                    end_date=end_date
+                )
+
+                if "error" in response:
+                    st.error(f"Error: {response['error']}")
+                else:
+                    st.success("Here are your travel recommendations!")
+                    st.json(response)  # Display raw results for now
 
 # Chat with AI Page
 elif page == "Chat with AI":

@@ -49,41 +49,30 @@ handle_queries = Task(
     verbose=False
 )
 
-# Define a basic agent and task
-echo_agent = Agent(
-    role="Echo Agent",
-    goal="Simply echo back the inputs received for testing purposes.",
-    backstory="You are a debugging agent designed to verify input/output flow.",
-    verbose=False
-)
 
-echo_task = Task(
-    description="Echo the inputs received to verify the connection between Streamlit and CrewAI.",
-    expected_output="The exact inputs provided by the frontend.",
-    agent=echo_agent,
-    verbose=False
-)
 
-# Update the crew definition
+# Create the crew
 crew = Crew(
-    agents=[echo_agent],
-    tasks=[echo_task],
+    agents=[recommendation_agent, search_agent, chat_agent],
+    tasks=[fetch_travel_deals, generate_recommendations, handle_queries],
     process=Process.sequential,
     verbose=False
 )
 
-def echo_inputs(inputs):
+def get_travel_recommendations(destination, interests, budget, start_date, end_date):
+    """
+    Triggers CrewAI agents to fetch travel deals and generate recommendations.
+    """
+    inputs = {
+        "destination": destination,
+        "interests": interests,
+        "budget": budget,
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+    }
     try:
         results = crew.kickoff(inputs=inputs)
         return results
     except Exception as e:
         return {"error": str(e)}
 
-
-# Create the crew
-# crew = Crew(
-#     agents=[recommendation_agent, search_agent, chat_agent],
-#     tasks=[fetch_travel_deals, generate_recommendations, handle_queries],
-#     process=Process.sequential,
-#     verbose=False
-# )
