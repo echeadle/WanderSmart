@@ -1,0 +1,11 @@
+[theme]
+base = "dark"  # Ensures a consistent dark theme
+#primaryColor = "#4CAF50"  # Green for buttons and accents
+#backgroundColor = "#1E1E2E"  # Midnight blue for the app's main background
+#secondaryBackgroundColor = "#2A2A3D"  # Deep slate for widgets or secondary panels
+textColor = "#FFFFFF"  # White for readability
+font = "sans serif"  # Clean and modern font
+
+primaryColor = "#1DB954"
+backgroundColor = "#121212"
+secondaryBackgroundColor = "#191919"

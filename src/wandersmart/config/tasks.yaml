@@ -1,0 +1,16 @@
+search_task:
+  description: >
+    Collect information on potential travel destinations based on user inputs, such as 
+    budget, interests, location, and filters. Example filters include:
+      - Geographical region (e.g., Europe, Southeast Asia).
+      - Travel duration (e.g., weekend trips, two-week vacations).
+      - Climate preferences (e.g., beach destinations, cold weather).
+      - Special interests (e.g., family-friendly, historical landmarks, adventurous activities).
+  expected_output: >
+    A comprehensive report in JSON format detailing potential vacation destinations and 
+    associated travel details (e.g., attractions, accommodations, transportation).
+  inputs:
+    - user_preferences
+    - destination_filter
+  output_format: JSON
+  agent: research_specialist
