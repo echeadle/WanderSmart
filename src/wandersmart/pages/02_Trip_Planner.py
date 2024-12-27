@@ -1,47 +1,46 @@
 import streamlit as st
-from datetime import date
-from utils.constants import MIN_BUDGET, MAX_BUDGET, BUDGET_STEP, DESTINATION_INTERESTS
-from utils.validation import validate_inputs
 from streamlit_utils import fetch_itinerary
 
-st.header("Trip Planner")
-st.write("Plan your trip by filling in the necessary details.")
+st.header("Plan Your Trip")
+st.write("Answer a few questions to help us tailor your perfect European adventure.")
 
-# Input Fields
+# User inputs
 name = st.text_input("What is your name?")
 destination = st.text_input("Where do you want to go?")
-start_date = st.date_input("When do you want to start your trip?", min_value=date.today())
-end_date = st.date_input("When do you want to return?", min_value=date.today())
-budget = st.slider("What is your budget (in $)?", MIN_BUDGET, MAX_BUDGET, step=BUDGET_STEP)
-interests = st.multiselect("What are you interested in?", DESTINATION_INTERESTS)
+start_date = st.date_input("When do you want to start your trip?")
+end_date = st.date_input("When do you want to return?")
+budget = st.slider("What is your budget (in $)?", 500, 10000, step=500)
+interests = st.multiselect(
+    "What are you interested in?",
+    ["History", "Art", "Food", "Nightlife", "Nature", "Shopping"]
+)
 
-if st.button("Get My Itinerary"):
-    # Validate inputs
-    is_valid, error_message = validate_inputs(name, destination, start_date, end_date)
-    if not is_valid:
-        st.error(error_message)
-    else:
-        # Prepare data
-        inputs = {
-            "name": name,
-            "destination": destination,
-            "start_date": start_date.isoformat(),
-            "end_date": end_date.isoformat(),
-            "budget": budget,
-            "interests": interests
-        }
+# Validate inputs
+if start_date > end_date:
+    st.error("Error: Start date must be before the end date.")
+elif st.button("Get My Itinerary"):
+    # Prepare inputs for fetch_itinerary
+    user_inputs = {
+        "destination": destination,
+        "budget": budget,
+        "start_date": str(start_date),
+        "end_date": str(end_date),
+        "interests": interests
+    }
+    
+    # Fetch itinerary
+    results = fetch_itinerary(user_inputs)
 
-        # Call the backend utility
-        with st.spinner("Fetching your itinerary..."):
-            response = fetch_itinerary(inputs)
-            if "error" in response:
-                st.error(f"Error: {response['error']}")
-            elif "recommendations" in response:
-                st.success("Here is your itinerary!")
-                for rec in response["recommendations"]:
-                    st.markdown(f"### {rec['title']}")
-                st.write(f"Price: ${rec['price']}")
-                st.write(f"Details: {rec['details']}")
-                st.image(rec["image"], use_container_width=True)
-            else:
-                st.error("No recommendations found.")
+    # Display results
+    if "error" in results:
+        st.error(results["error"])
+    elif "message" in results:
+        st.warning(results["message"])
+    elif "recommendations" in results:
+        st.success("Here are your recommendations:")
+        for rec in results["recommendations"]:
+            st.markdown(f"### {rec['title']}")
+            st.write(f"**Attractions:** {', '.join(rec['attractions'])}")
+            st.write(f"**Accommodations:** {', '.join(rec['accommodations'])}")
+            st.write(f"**Transportation:** {rec['transportation']}")
+            st.write("---")

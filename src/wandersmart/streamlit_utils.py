@@ -60,15 +60,77 @@ def fetch_itinerary(inputs):
     Fetch an itinerary based on user inputs using CrewAI.
 
     Args:
-        inputs (dict): A dictionary containing user inputs such as destination, budget, and dates.
+        inputs (dict): A dictionary containing user inputs such as destination, budget, and interests.
 
     Returns:
-        dict: A dictionary representing the itinerary or an error message if something goes wrong.
+        dict: A dictionary with matched recommendations or a message if no matches are found.
     """
-   # logger.info(f"Fetching itinerary with inputs: {inputs}")
+    logger.info(f"Fetching itinerary with inputs: {inputs}")
 
-    results = Wandersmart().crew().kickoff(inputs=inputs)
-    return results
+    try:
+        # Simulate calling CrewAI to get recommendations
+        # Replace this with the actual CrewAI response
+        response = {
+            "destinations": [
+                {
+                    "location": "Bali, Indonesia",
+                    "budget": "Under $1000",
+                    "interests": ["Beach", "Culture", "Adventure"],
+                    "attractions": ["Ubud Monkey Forest", "Tegallalang Rice Terrace", "Bali Beaches"],
+                    "accommodations": ["Affordable guesthouses", "Bali villas"],
+                    "transportation": "Local taxis, scooter rentals"
+                },
+                {
+                    "location": "Rome, Italy",
+                    "budget": "Under $1000",
+                    "interests": ["Historical Landmarks", "Culture"],
+                    "attractions": ["Colosseum", "Vatican City", "Pantheon"],
+                    "accommodations": ["Budget hotels", "Hostels"],
+                    "transportation": "Public transportation, walking"
+                }
+            ]
+        }
+
+        # Extract the destinations
+        destinations = response.get("destinations", [])
+
+        # Filter destinations based on user inputs
+        matched_destinations = [
+            {
+                **destination,
+                "title": f"{destination['location']} - {destination['budget']}"
+            }
+            for destination in destinations
+            if inputs["destination"].lower() in destination["location"].lower()
+            or set(inputs["interests"]).intersection(destination["interests"])
+        ]
+
+        if not matched_destinations:
+            logger.warning("No matching recommendations found for the given inputs.")
+            return {"message": "No matching recommendations found. Please adjust your preferences."}
+
+        logger.info(f"Matched recommendations: {matched_destinations}")
+        return {"recommendations": matched_destinations}
+
+    except Exception as e:
+        # Log the exception with stack trace
+        logger.error(f"Error while fetching itinerary: {e}", exc_info=True)
+        return {"error": "An unexpected error occurred. Please try again later."}
+
+# def fetch_itinerary(inputs):
+#     """
+#     Fetch an itinerary based on user inputs using CrewAI.
+
+#     Args:
+#         inputs (dict): A dictionary containing user inputs such as destination, budget, and dates.
+
+#     Returns:
+#         dict: A dictionary representing the itinerary or an error message if something goes wrong.
+#     """
+#    # logger.info(f"Fetching itinerary with inputs: {inputs}")
+
+#     results = Wandersmart().crew().kickoff(inputs=inputs)
+    # return results
     # try:
     #     # Simulate calling CrewAI to get recommendations
     #     results = Wandersmart().crew().kickoff(inputs=inputs)  # Assuming crew is already imported and set up
