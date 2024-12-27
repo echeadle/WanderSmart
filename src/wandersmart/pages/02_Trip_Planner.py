@@ -40,8 +40,8 @@ if st.button("Get My Itinerary"):
                 st.success("Here is your itinerary!")
                 for rec in response["recommendations"]:
                     st.markdown(f"### {rec['title']}")
-                    st.write(f"Price: ${rec['price']}")
-                    st.write(f"Details: {rec['details']}")
-                    st.image(rec["image"], use_container_width=True)
+                st.write(f"Price: ${rec['price']}")
+                st.write(f"Details: {rec['details']}")
+                st.image(rec["image"], use_container_width=True)
             else:
                 st.error("No recommendations found.")
