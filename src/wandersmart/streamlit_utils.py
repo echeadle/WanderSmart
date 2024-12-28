@@ -63,59 +63,56 @@ def fetch_itinerary(inputs):
         inputs (dict): A dictionary containing user inputs such as destination, budget, and interests.
 
     Returns:
-        dict: A dictionary with matched recommendations or a message if no matches are found.
+        str: A Markdown string representing the travel details or an error message.
     """
     logger.info(f"Fetching itinerary with inputs: {inputs}")
 
     try:
-        # Simulate calling CrewAI to get recommendations
-        # Replace this with the actual CrewAI response
-        response = {
-            "destinations": [
-                {
-                    "location": "Bali, Indonesia",
-                    "budget": "Under $1000",
-                    "interests": ["Beach", "Culture", "Adventure"],
-                    "attractions": ["Ubud Monkey Forest", "Tegallalang Rice Terrace", "Bali Beaches"],
-                    "accommodations": ["Affordable guesthouses", "Bali villas"],
-                    "transportation": "Local taxis, scooter rentals"
-                },
-                {
-                    "location": "Rome, Italy",
-                    "budget": "Under $1000",
-                    "interests": ["Historical Landmarks", "Culture"],
-                    "attractions": ["Colosseum", "Vatican City", "Pantheon"],
-                    "accommodations": ["Budget hotels", "Hostels"],
-                    "transportation": "Public transportation, walking"
-                }
-            ]
-        }
+        # Initialize the Wandersmart instance and get the crew
+        wandersmart = Wandersmart()
+        crew = wandersmart.crew()
 
-        # Extract the destinations
-        destinations = response.get("destinations", [])
+        # Call the CrewAI workflow
+        raw_response = crew.kickoff(inputs=inputs)
 
-        # Filter destinations based on user inputs
-        matched_destinations = [
-            {
-                **destination,
-                "title": f"{destination['location']} - {destination['budget']}"
-            }
-            for destination in destinations
-            if inputs["destination"].lower() in destination["location"].lower()
-            or set(inputs["interests"]).intersection(destination["interests"])
-        ]
+        # Normalize the response
+        response = wandersmart.normalize_response(raw_response)
+    
+        # Check if normalization succeeded
+        if not response:
+            logger.warning("Normalized CrewAI response is empty or invalid.")
+            return "No matching recommendations found. Please adjust your preferences."
 
-        if not matched_destinations:
-            logger.warning("No matching recommendations found for the given inputs.")
-            return {"message": "No matching recommendations found. Please adjust your preferences."}
+        # Convert normalized response to Markdown
+        markdown = f"## Travel Details for {response['destination']}\n\n"
 
-        logger.info(f"Matched recommendations: {matched_destinations}")
-        return {"recommendations": matched_destinations}
+        # Add Flights
+        markdown += "### Flights\n"
+        for provider in response["flights"]:
+            markdown += f"- **{provider['name']}**: {provider['details']} ([Link]({provider['link']}))\n"
+
+        # Add Accommodations
+        markdown += "\n### Accommodations\n"
+        for accommodation in response["accommodations"]:
+            markdown += f"- **{accommodation['type']}**: Estimated Cost ${accommodation['estimated_cost']} ([Link]({accommodation['link']}))\n"
+
+        # Add Tours
+        markdown += "\n### Tours\n"
+        for tour in response["tours"]:
+            markdown += f"- **{tour['name']}**: {tour['details']} ([Link]({tour['link']}))\n"
+
+        # Add Additional Resources
+        markdown += "\n### Additional Resources\n"
+        for resource in response["additional_resources"]:
+            markdown += f"- [More Info]({resource['link']}): {resource['description']}\n"
+
+        logger.info(f"Generated Markdown: {markdown}")
+        return markdown
 
     except Exception as e:
         # Log the exception with stack trace
         logger.error(f"Error while fetching itinerary: {e}", exc_info=True)
-        return {"error": "An unexpected error occurred. Please try again later."}
+        return "An unexpected error occurred. Please try again later."
 
 # def fetch_itinerary(inputs):
 #     """
