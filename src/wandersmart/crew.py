@@ -1,6 +1,8 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task, before_kickoff, after_kickoff
 import logging
+from pydantic import ValidationError
+from models import CrewAIResponse
 
 # Uncomment the following line to use an example of a custom tool
 # from wandersmart.tools.custom_tool import MyCustomTool
@@ -37,8 +39,14 @@ class Wandersmart():
 
 	@before_kickoff # Optional hook to be executed before the crew starts
 	def pull_data_example(self, inputs):
+		 # Debug: Log inputs before processing
+		logger.debug(f"Inputs before processing: {inputs}")
+		
 		# Example of pulling data from an external API, dynamically changing the inputs
 		inputs['extra_data'] = "This is extra data"
+		
+		# Debug: Log inputs after processing
+		logger.debug(f"Inputs after processing: {inputs}")
 		return inputs
 
 	@after_kickoff # Optional hook to be executed after the crew has finished
@@ -73,7 +81,7 @@ class Wandersmart():
 			# process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
 		)
   
-def normalize_response(self, response):
+def normalize_response(response):
     """
     Normalize the CrewAI response into a consistent JSON format.
 
@@ -84,37 +92,25 @@ def normalize_response(self, response):
         dict: A standardized JSON structure.
     """
     try:
-        # Convert response to a dictionary if it's a Pydantic object
+        # Ensure response is a dictionary
         if hasattr(response, "dict"):
             response = response.dict()
+        elif isinstance(response, str):
+            response = json.loads(response)
 
         # Debug: Log the raw response
         logger.debug(f"Raw response: {response}")
 
-        # Extract fields with validation
-        destination = response.get("destination", "Destination not specified")
-        travel_details = response.get("travel_details", {})
-
-        # Validate travel_details structure
-        flights = travel_details.get("flights", {}).get("service_providers", [])
-        accommodations = travel_details.get("accommodations", {}).get("options", [])
-        tours = travel_details.get("tours", {}).get("options", [])
-        additional_resources = travel_details.get("additional_resources", [])
-
-        # Debug: Log each extracted field
-        logger.debug(f"Destination: {destination}")
-        logger.debug(f"Flights: {flights}")
-        logger.debug(f"Accommodations: {accommodations}")
-        logger.debug(f"Tours: {tours}")
-        logger.debug(f"Additional Resources: {additional_resources}")
-
-        # Normalize travel details
+        # Dynamically extract fields
         normalized_response = {
-            "destination": destination,
-            "flights": flights,
-            "accommodations": accommodations,
-            "tours": tours,
-            "additional_resources": additional_resources
+            "destination": response.get("destination", "Destination not specified"),
+            "budget": response.get("budget", "Budget not specified"),
+            "interests": response.get("interests", []),
+            "travel_details": response.get("travel_details", {}),
+            "flights": response.get("flights", []),
+            "accommodations": response.get("accommodations", []),
+            "tours": response.get("tours", []),
+            "additional_resources": response.get("additional_resources", [])
         }
 
         # Debug: Log normalized response
@@ -124,8 +120,7 @@ def normalize_response(self, response):
     except Exception as e:
         # Log the exception
         logger.error(f"Error normalizing CrewAI response: {e}", exc_info=True)
-        return {}
-
+        return {"error": "Failed to normalize response"}
 
 my_crew = Wandersmart().crew()
   # Instantiate the Crew object

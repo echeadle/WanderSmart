@@ -55,94 +55,53 @@ def test_logging():
     logger.critical("This is a critical issue!")
 
 # Fetch itinerary function
-def fetch_itinerary(inputs):
+from crew import Wandersmart
+
+def fetch_itinerary(user_inputs):
+    logger.debug(f"User inputs: {user_inputs}")
+    crew = Wandersmart().crew()
+    raw_response = crew.kickoff(inputs=user_inputs)
+    logger.debug(f"Raw response: {raw_response}")
+    
+    # Ensure raw_response is a dictionary
+    if hasattr(raw_response, "dict"):
+        raw_response = raw_response.dict()
+    elif isinstance(raw_response, str):
+        # Remove leading ```json and trailing ```
+        raw_response = raw_response.strip("```json").strip("```")
+        raw_response = json.loads(raw_response)
+    
+    # Extract and print only the "raw" keys and values
+    raw_values = extract_raw_values(raw_response)
+    logger.debug(f"Extracted raw values: {raw_values}")
+    
+    return raw_values
+
+def extract_raw_values(json_data):
     """
-    Fetch an itinerary based on user inputs using CrewAI.
+    Extract values associated with the "raw" keys from the JSON data.
 
     Args:
-        inputs (dict): A dictionary containing user inputs such as destination, budget, and interests.
+        json_data (dict): The JSON data to parse.
 
     Returns:
-        str: A Markdown string representing the travel details or an error message.
+        dict: A dictionary of "raw" keys and their associated values.
     """
-    logger.info(f"Fetching itinerary with inputs: {inputs}")
+    raw_values = {}
 
-    try:
-        # Initialize the Wandersmart instance and get the crew
-        wandersmart = Wandersmart()
-        crew = wandersmart.crew()
+    def recursive_extract(data):
+        if isinstance(data, dict):
+            for key, value in data.items():
+                if key == "raw":
+                    raw_values[key] = value
+                else:
+                    recursive_extract(value)
+        elif isinstance(data, list):
+            for item in data:
+                recursive_extract(item)
 
-        # Call the CrewAI workflow
-        raw_response = crew.kickoff(inputs=inputs)
-
-        # Normalize the response
-        response = wandersmart.normalize_response(raw_response)
-    
-        # Check if normalization succeeded
-        if not response:
-            logger.warning("Normalized CrewAI response is empty or invalid.")
-            return "No matching recommendations found. Please adjust your preferences."
-
-        # Convert normalized response to Markdown
-        markdown = f"## Travel Details for {response['destination']}\n\n"
-
-        # Add Flights
-        markdown += "### Flights\n"
-        for provider in response["flights"]:
-            markdown += f"- **{provider['name']}**: {provider['details']} ([Link]({provider['link']}))\n"
-
-        # Add Accommodations
-        markdown += "\n### Accommodations\n"
-        for accommodation in response["accommodations"]:
-            markdown += f"- **{accommodation['type']}**: Estimated Cost ${accommodation['estimated_cost']} ([Link]({accommodation['link']}))\n"
-
-        # Add Tours
-        markdown += "\n### Tours\n"
-        for tour in response["tours"]:
-            markdown += f"- **{tour['name']}**: {tour['details']} ([Link]({tour['link']}))\n"
-
-        # Add Additional Resources
-        markdown += "\n### Additional Resources\n"
-        for resource in response["additional_resources"]:
-            markdown += f"- [More Info]({resource['link']}): {resource['description']}\n"
-
-        logger.info(f"Generated Markdown: {markdown}")
-        return markdown
-
-    except Exception as e:
-        # Log the exception with stack trace
-        logger.error(f"Error while fetching itinerary: {e}", exc_info=True)
-        return "An unexpected error occurred. Please try again later."
-
-# def fetch_itinerary(inputs):
-#     """
-#     Fetch an itinerary based on user inputs using CrewAI.
-
-#     Args:
-#         inputs (dict): A dictionary containing user inputs such as destination, budget, and dates.
-
-#     Returns:
-#         dict: A dictionary representing the itinerary or an error message if something goes wrong.
-#     """
-#    # logger.info(f"Fetching itinerary with inputs: {inputs}")
-
-#     results = Wandersmart().crew().kickoff(inputs=inputs)
-    # return results
-    # try:
-    #     # Simulate calling CrewAI to get recommendations
-    #     results = Wandersmart().crew().kickoff(inputs=inputs)  # Assuming crew is already imported and set up
-
-    #     if not results:
-    #         logger.warning("No itinerary returned from CrewAI.")
-    #         return {"error": "No itinerary could be generated. Please try again later."}
-
-    #     logger.info(f"Successfully fetched itinerary: {results}")
-    #     return results
-
-    # except Exception as e:
-    #     # Log the exception with stack trace
-    #     logger.error(f"Error while fetching itinerary: {e}", exc_info=True)
-    #     return {"error": "An unexpected error occurred. Please try again later."}
+    recursive_extract(json_data)
+    return raw_values
 
 if __name__ == "__main__":
     test_logging()  # Keep this for logging tests
@@ -155,4 +114,5 @@ if __name__ == "__main__":
         "end_date": "2024-01-10",
         "interests": ["Art", "History"]
     }
-    print(fetch_itinerary(test_inputs))
+    results = fetch_itinerary(test_inputs)
+    print(results)

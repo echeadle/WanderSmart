@@ -2,6 +2,7 @@ import logging  # Required for updating logger handlers
 import streamlit as st
 from dotenv import load_dotenv
 import os
+import json
 
 from streamlit_utils import logger, JSONFormatter  # Import logger and formatter
 
@@ -60,6 +61,32 @@ def update_logging():
         file_handler.setFormatter(json_formatter)
         logger.addHandler(file_handler)
 
+def extract_raw_values(json_data):
+    """
+    Extract values associated with the "raw" keys from the JSON data.
+
+    Args:
+        json_data (dict): The JSON data to parse.
+
+    Returns:
+        list: A list of values associated with the "raw" keys.
+    """
+    raw_values = []
+
+    def recursive_extract(data):
+        if isinstance(data, dict):
+            for key, value in data.items():
+                if key == "raw":
+                    raw_values.append(value)
+                else:
+                    recursive_extract(value)
+        elif isinstance(data, list):
+            for item in data:
+                recursive_extract(item)
+
+    recursive_extract(json_data)
+    return raw_values
+
 # Logging Control UI
 st.header("Logging Settings")
 
@@ -83,3 +110,28 @@ if st.button("Apply Logging Settings"):
     # Dynamically update logging configuration
     update_logging()
     st.success("Logging settings applied dynamically!")
+
+st.header("Logging Control")
+st.write("Upload a JSON log file to extract 'raw' values.")
+
+uploaded_file = st.file_uploader("Choose a JSON log file", type="json")
+
+if uploaded_file is not None:
+    try:
+        log_data = uploaded_file.read().decode("utf-8")
+        if not log_data.strip():
+            raise ValueError("The uploaded file is empty.")
+        json_data = json.loads(log_data)
+        raw_values = extract_raw_values(json_data)
+        st.header("Extracted Raw Values")
+        for raw_value in raw_values:
+            st.json(raw_value)
+    except json.JSONDecodeError as e:
+        st.error(f"The uploaded file is not a valid JSON file. Error: {e}")
+        logger.error(f"JSONDecodeError: {e}")
+    except ValueError as e:
+        st.error(f"Error: {e}")
+        logger.error(f"ValueError: {e}")
+    except Exception as e:
+        st.error(f"An unexpected error occurred: {e}")
+        logger.error(f"Unexpected error: {e}", exc_info=True)

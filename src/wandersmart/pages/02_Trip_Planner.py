@@ -1,5 +1,6 @@
 import streamlit as st
-from streamlit_utils import fetch_itinerary
+from crew import Wandersmart
+from streamlit_utils import fetch_itinerary, extract_raw_values
 
 st.header("Plan Your Trip")
 st.write("Answer a few questions to help us tailor your perfect European adventure.")
@@ -28,19 +29,12 @@ elif st.button("Get My Itinerary"):
         "interests": interests
     }
     
+    # Debug: Log user inputs
+    st.write(f"User inputs: {user_inputs}")
+    
     # Fetch itinerary
     results = fetch_itinerary(user_inputs)
 
-    # Display results
-    if "error" in results:
-        st.error(results["error"])
-    elif "message" in results:
-        st.warning(results["message"])
-    elif "recommendations" in results:
-        st.success("Here are your recommendations:")
-        for rec in results["recommendations"]:
-            st.markdown(f"### {rec['title']}")
-            st.write(f"**Attractions:** {', '.join(rec['attractions'])}")
-            st.write(f"**Accommodations:** {', '.join(rec['accommodations'])}")
-            st.write(f"**Transportation:** {rec['transportation']}")
-            st.write("---")
+    # Display the "raw" keys and values
+    raw_values = extract_raw_values(results)
+    st.json(raw_values)
