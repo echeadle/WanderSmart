@@ -14,3 +14,17 @@ search_task:
     - destination_filter
   output_format: JSON
   agent: research_specialist
+
+recommendation_task:
+  description: >
+    Analyze user preferences and travel options to generate personalized recommendations.
+    Consider factors such as budget, interests, travel dates, and preferred destinations.
+  expected_output: >
+    A structured JSON object containing the top 3 recommendations, each with a title, description, 
+    and any associated costs or details.
+  inputs:
+    - user_preferences
+    - travel_options
+  output_format: JSON
+  agent: recommendation_specialist
+

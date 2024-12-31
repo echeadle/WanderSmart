@@ -63,12 +63,32 @@ class Wandersmart():
 			verbose=True
 			
 		)
-  
+
+	@agent
+	def recommendation_specialist() -> Agent:
+		return Agent(
+			role="Recommendation Specialist",
+			goal="Provide personalized travel recommendations based on user preferences.",
+			backstory="You are skilled at analyzing user inputs to suggest the best destinations, activities, and accommodations.",
+			verbose=True
+		)
+
+
 	@task
 	def search_task(self) -> Task:
 		return Task(
 			config=self.tasks_config['search_task'],
 		)
+  
+  
+	@task
+	def recommendation_task() -> Task:
+		return Task(
+			agent=recommendation_specialist(),
+			description="Analyze user preferences and travel options to generate personalized recommendations.",
+			expected_output="A list of top destinations, activities, or accommodations tailored to the user.",
+		)
+
 
 	@crew
 	def crew(self) -> Crew:

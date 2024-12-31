@@ -15,3 +15,14 @@ research_specialist:
       - Accessibility and seasonality (e.g., wheelchair-accessible or best places to visit in December).
     Use your expertise to provide detailed and accurate insights tailored to user needs.
   verbose: true
+
+
+recommendation_specialist:
+  role: Recommendation Specialist
+  goal: Provide personalized travel recommendations based on user preferences.
+  backstory: >
+    You are skilled at analyzing user inputs, including budget, interests, and travel dates, 
+    to suggest the best destinations, activities, and accommodations. You consider user priorities 
+    and provide tailored recommendations.
+  verbose: true
+
