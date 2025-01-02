@@ -172,3 +172,8 @@ cython_debug/
 # My Additions
 .env
 __pycache__/
+old/
+tests/
+raw_values_fetch_itenerary.json
+src/wandersmart/print_json.py
+src/wandersmart/transform_json.py

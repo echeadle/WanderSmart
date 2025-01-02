@@ -3,6 +3,7 @@ from crewai.project import CrewBase, agent, crew, task, before_kickoff, after_ki
 import logging
 from pydantic import ValidationError
 from models import CrewAIResponse
+import json
 
 # Uncomment the following line to use an example of a custom tool
 # from wandersmart.tools.custom_tool import MyCustomTool
@@ -65,13 +66,11 @@ class Wandersmart():
 		)
 
 	@agent
-	def recommendation_specialist() -> Agent:
+	def recommendation_specialist(self) -> Agent:
 		return Agent(
-			role="Recommendation Specialist",
-			goal="Provide personalized travel recommendations based on user preferences.",
-			backstory="You are skilled at analyzing user inputs to suggest the best destinations, activities, and accommodations.",
-			verbose=True
-		)
+        config=self.agents_config['recommendation_specialist'],
+        verbose=True
+    )
 
 
 	@task
@@ -82,12 +81,10 @@ class Wandersmart():
   
   
 	@task
-	def recommendation_task() -> Task:
+	def recommendation_task(self) -> Task:
 		return Task(
-			agent=recommendation_specialist(),
-			description="Analyze user preferences and travel options to generate personalized recommendations.",
-			expected_output="A list of top destinations, activities, or accommodations tailored to the user.",
-		)
+            config=self.tasks_config['recommendation_task']
+        )
 
 
 	@crew
@@ -101,6 +98,22 @@ class Wandersmart():
 			# process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
 		)
   
+def clean_json_string(json_string):
+    """
+    Remove leading ```json and trailing ``` from a JSON string.
+
+    Args:
+        json_string (str): The JSON string to clean.
+
+    Returns:
+        str: The cleaned JSON string.
+    """
+    if json_string.startswith("```json"):
+        json_string = json_string[len("```json"):].strip()
+    if json_string.endswith("```"):
+        json_string = json_string[:-len("```")].strip()
+    return json_string
+
 def normalize_response(response):
     """
     Normalize the CrewAI response into a consistent JSON format.
@@ -116,6 +129,8 @@ def normalize_response(response):
         if hasattr(response, "dict"):
             response = response.dict()
         elif isinstance(response, str):
+            # Clean the JSON string
+            response = clean_json_string(response)
             response = json.loads(response)
 
         # Debug: Log the raw response
